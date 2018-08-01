@@ -16,6 +16,9 @@ class Player {
 		this.score = 0;
 		this.life = 5;
 		this.top = [];
+		this.audio = new Audio();
+		this.step = "assets/audio/sfx_movement_footsteps5.wav";
+		this.winningSound = "assets/audio/BANK_00_INSTR_0008_SND_0019.wav";
 	}
 	update(dt) {
 		// You should multiply any movement by the dt parameter
@@ -35,23 +38,35 @@ class Player {
 	}
 
 	handleInput(key) {
+		this.audio.src = this.step;
 		switch (key) {
 			case "left":
-				if (this.x > 0) this.x -= 101;
+				if (this.x > 0 && !this.touch) {
+					this.audio.play();
+					this.x -= 101;
+				}
 				break;
 			case "right":
-				if (this.x < 304) this.x += 101;
+				if (this.x < 304 && !this.touch) {
+					this.audio.play();
+					this.x += 101;
+				}
 				break;
 			case "up":
-				if (this.y > 0) this.y -= 83;
-
+				if (this.y > 0 && !this.touch) {
+					this.audio.play();
+					this.y -= 83;
+				}
 				// touch water case
-				if (this.y < 0) {
+				if (this.y < 0 && !this.winner) {
 					this.win();
 				}
 				break;
 			case "down":
-				if (this.y < 400) this.y += 83;
+				if (this.y < 400 && !this.touch) {
+					this.audio.play();
+					this.y += 83;
+				}
 				break;
 			default:
 				return;
@@ -65,12 +80,16 @@ class Player {
 		this.touch = true;
 		this.startPosition();
 		setTimeout(() => {
+			this.x = 202;
+			this.y = 405;
 			this.touch = false;
-		}, 200);
+		}, 350);
 	}
 
 	win() {
 		this.winner = true;
+		this.audio.src = this.winningSound;
+		this.audio.play();
 		document.querySelector("#score").innerHTML = ++this.score;
 		setTimeout(() => {
 			this.x = 202;
@@ -81,7 +100,11 @@ class Player {
 
 	startPosition() {
 		this.life -= 1;
-		document.querySelector("#life").innerHTML = this.life;
+		if (this.life >= 0) {
+			let hp = document.querySelector(".fas");
+			hp.firstElementChild.className = "far fa-heart";
+			hp.className = "far";
+		}
 		if (this.life === 0) {
 			document.querySelector("#score").innerHTML = "YOU LOSE !";
 			this.top.push(this.score);
@@ -94,15 +117,21 @@ class Player {
 			setTimeout(() => {
 				this.score = 0;
 				this.life = 5;
-				document.querySelector("#life").innerHTML = this.life;
-				document.querySelector("#score").innerHTML = this.score;
-			}, 2000);
-		} else {
-			document.querySelector("#life").innerHTML = player.life;
-		}
 
-		this.x = 202;
-		this.y = 405;
+				let heart = document.querySelector(".heart");
+				// delete old
+				heart.innerHTML = "";
+				for (let index = 0; index < this.life; index++) {
+					let li = document.createElement("li");
+					li.setAttribute("class", "fas");
+					let i = document.createElement("i");
+					i.setAttribute("class", "fas fa-heart");
+					li.appendChild(i);
+					heart.appendChild(li);
+				}
+				document.querySelector("#score").innerHTML = this.score;
+			}, 1000);
+		}
 	}
 }
 
@@ -121,6 +150,8 @@ var Enemy = function(x = -101, y = 0, speed = 100) {
 	// bug size in px
 	this.height = 66;
 	this.width = 99;
+	this.enemyAudio = new Audio();
+	this.collisionSound = "assets/audio/sfx_sounds_falling3.wav";
 };
 
 // Update the enemy's position, required method for game
@@ -138,31 +169,28 @@ Enemy.prototype.update = function(dt, witdh) {
 	} else {
 		this.x += this.speed * dt;
 	}
-	// Updates the Enemy location(you need to implement)
-	ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-
-	// Handles collision with the Player(you need to implement)
-	// if (this.x < player.x + player.w &&
-	// 	this.x + this.w > player.x &&
-	// 	this.y < player.y + player.h &&
-	// 	this.h + this.y > player.y)
-
-	//    if (this.y === player.y) {
-	// 	if (player.x >= this.x - 50 && player.x <= this.x + 50) reset();
-	// }
-	if (
-		player.x < this.x + 80 &&
-		player.x + 80 > this.x &&
-		player.y < this.y + 60 &&
-		60 + player.y > this.y
-	) {
-		player.resetPosition();
-	}
+	// Updates the Enemy location
+	// ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
 	ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+Enemy.prototype.collision = function() {
+	// Handles collision with the Player
+	if (
+		player.x < this.x + 80 &&
+		player.x + 80 > this.x &&
+		player.y < this.y + 60 &&
+		60 + player.y > this.y &&
+		!player.touch
+	) {
+		this.enemyAudio.src = this.collisionSound;
+		this.enemyAudio.play();
+		player.resetPosition();
+	}
 };
 
 // Now instantiate your objects
@@ -188,4 +216,15 @@ document.addEventListener("keyup", function(e) {
 	};
 
 	player.handleInput(allowedKeys[e.keyCode]);
+});
+
+// Returns static NodeList of li elements in (ul with) class .char-selector
+const characters = document.querySelectorAll(".char-selector li");
+
+// Iterate through li elements, adding event listener for each. When clicked the text from p (with attribute hidden) in li item will be passed to setSprite method in Player class (causing character to change accordingly) and game will be reset
+characters.forEach(character => {
+	character.addEventListener("click", () => {
+		// Set sprite from user selection
+		player.sprite = character.querySelector("img").getAttribute("src");
+	});
 });

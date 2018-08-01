@@ -21,21 +21,25 @@ var Engine = (function(global) {
 	var doc = global.document,
 		win = global.window,
 		canvas = doc.createElement("canvas"),
-		score = doc.createElement("h1"),
-		life = doc.createElement("h1"),
-		top = doc.createElement("h1"),
+		game = doc.querySelector("#game"),
 		ctx = canvas.getContext("2d"),
 		lastTime;
 
 	canvas.width = 505;
 	canvas.height = 606;
-	doc.body.appendChild(canvas);
-	score.innerHTML = `SCORE : <span id="score">0</span>`;
-	doc.body.appendChild(score);
-	life.innerHTML = `LIFE : <span id="life">5</span>`;
-	doc.body.appendChild(life);
-	top.innerHTML = `TOP SCORE : <span id="top"></span>`;
-	doc.body.appendChild(top);
+	canvas.setAttribute("id", "canvas");
+	game.appendChild(canvas);
+
+	// Build hp bar
+	let heart = document.querySelector(".heart");
+	for (let index = 0; index < 5; index++) {
+		let li = document.createElement("li");
+		li.setAttribute("class", "fas");
+		let i = document.createElement("i");
+		i.setAttribute("class", "fas fa-heart");
+		li.appendChild(i);
+		heart.appendChild(li);
+	}
 
 	/* This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
@@ -165,10 +169,16 @@ var Engine = (function(global) {
 		/* Loop through all of the objects within the allEnemies array and call
          * the render function you have defined.
          */
-		player.render();
 		allEnemies.forEach(function(enemy) {
 			enemy.render();
+			// enemy.collision();
 		});
+		player.render();
+		allEnemies.forEach(function(enemy) {
+			enemy.collision();
+		});
+
+		// checkcollision
 	}
 
 	/* This function does nothing but it could have been a good place to
