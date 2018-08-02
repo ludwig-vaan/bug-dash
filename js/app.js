@@ -5,9 +5,9 @@ class Player {
 	constructor(x = 0, y = 0) {
 		this.x = x;
 		this.y = y;
-		this.sprite = "images/char-horn-girl.png";
-		this.collisionSprite = "images/char-horn-girl-collision.png";
-		this.winSprite = "images/char-horn-girl-winning.png";
+		this.sprite = `images/char-horn-girl.png`;
+		this.collisionSprite = `images/char-horn-girl-collision.png`;
+		this.winSprite = `images/char-horn-girl-winning.png`;
 		// png size in px
 		this.height = 85;
 		this.width = 75;
@@ -16,9 +16,13 @@ class Player {
 		this.score = 0;
 		this.life = 5;
 		this.top = [];
-		this.audio = new Audio();
-		this.step = "assets/audio/sfx_movement_footsteps5.wav";
-		this.winningSound = "assets/audio/BANK_00_INSTR_0008_SND_0019.wav";
+		this.stepPlayer = new Audio();
+		this.winPlayer = new Audio();
+		this.stepSound = "assets/audio/sfx_movement_footsteps5.wav";
+		this.winSound = "assets/audio/BANK_00_INSTR_0008_SND_0019.wav";
+
+		this.end = false;
+		this.endSprite = "images/end-game.png";
 	}
 	update(dt) {
 		// You should multiply any movement by the dt parameter
@@ -28,8 +32,10 @@ class Player {
 	}
 
 	render() {
-		if (!this.touch && !this.winner) {
+		if (!this.touch && !this.winner && !this.end) {
 			ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+		} else if (this.end) {
+			ctx.drawImage(Resources.get(this.endSprite), 0, 0);
 		} else if (this.winner) {
 			ctx.drawImage(Resources.get(this.winSprite), this.x, this.y);
 		} else {
@@ -38,23 +44,28 @@ class Player {
 	}
 
 	handleInput(key) {
-		this.audio.src = this.step;
+		this.stepPlayer.src = this.stepSound;
 		switch (key) {
 			case "left":
 				if (this.x > 0 && !this.touch) {
-					this.audio.play();
+					this.stepPlayer.load();
+					this.stepPlayer.pause();
+					this.stepPlayer.currentTime = 0;
+					this.stepPlayer.play();
 					this.x -= 101;
 				}
 				break;
 			case "right":
 				if (this.x < 304 && !this.touch) {
-					this.audio.play();
+					this.stepPlayer.load();
+					this.stepPlayer.play();
 					this.x += 101;
 				}
 				break;
 			case "up":
 				if (this.y > 0 && !this.touch) {
-					this.audio.play();
+					this.stepPlayer.load();
+					this.stepPlayer.play();
 					this.y -= 83;
 				}
 				// touch water case
@@ -64,7 +75,8 @@ class Player {
 				break;
 			case "down":
 				if (this.y < 400 && !this.touch) {
-					this.audio.play();
+					this.stepPlayer.load();
+					this.stepPlayer.play();
 					this.y += 83;
 				}
 				break;
@@ -83,13 +95,14 @@ class Player {
 			this.x = 202;
 			this.y = 405;
 			this.touch = false;
-		}, 350);
+		}, 550);
 	}
 
 	win() {
 		this.winner = true;
-		this.audio.src = this.winningSound;
-		this.audio.play();
+		this.winPlayer.src = this.winSound;
+		this.winPlayer.load();
+		this.winPlayer.play();
 		document.querySelector("#score").innerHTML = ++this.score;
 		setTimeout(() => {
 			this.x = 202;
@@ -106,17 +119,20 @@ class Player {
 			hp.className = "far";
 		}
 		if (this.life === 0) {
-			document.querySelector("#score").innerHTML = "YOU LOSE !";
+			document.querySelector("#snackBar").innerHTML = "YOU LOSE !";
 			this.top.push(this.score);
 			document.querySelector("#top").innerHTML = this.top.join(", ");
-			bug_1 = new Enemy(-101, 60, 150);
-			bug_2 = new Enemy(-101, 142, 100);
-			bug_3 = new Enemy(-101, 224, 75);
-
-			allEnemies = [bug_1, bug_2, bug_3];
+			this.end = true;
 			setTimeout(() => {
+				this.end = false;
+				bug_1 = new Enemy(-101, 60, 150);
+				bug_2 = new Enemy(-101, 142, 100);
+				bug_3 = new Enemy(-101, 224, 75);
+
+				allEnemies = [bug_1, bug_2, bug_3];
 				this.score = 0;
 				this.life = 5;
+				document.querySelector("#snackBar").innerHTML = "";
 
 				let heart = document.querySelector(".heart");
 				// delete old
@@ -130,7 +146,7 @@ class Player {
 					heart.appendChild(li);
 				}
 				document.querySelector("#score").innerHTML = this.score;
-			}, 1000);
+			}, 3000);
 		}
 	}
 }
@@ -175,7 +191,7 @@ Enemy.prototype.update = function(dt, witdh) {
 
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
-	ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+	if (!player.end) ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
 Enemy.prototype.collision = function() {
@@ -226,5 +242,20 @@ characters.forEach(character => {
 	character.addEventListener("click", () => {
 		// Set sprite from user selection
 		player.sprite = character.querySelector("img").getAttribute("src");
+		player.defaultSprite = player.sprite.substr(
+			0,
+			player.sprite.length - 4
+		);
+		console.log("====================================");
+		console.log(player.sprite);
+		console.log("====================================");
+		player.collisionSprite = `${player.defaultSprite}-collision.png`;
+		console.log("====================================");
+		console.log(player.collisionSprite);
+		console.log("====================================");
+		player.winSprite = `${player.defaultSprite}-winning.png`;
+		console.log("====================================");
+		console.log(player.winSprite);
+		console.log("====================================");
 	});
 });

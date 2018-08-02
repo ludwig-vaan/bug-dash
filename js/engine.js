@@ -23,12 +23,15 @@ var Engine = (function(global) {
 		canvas = doc.createElement("canvas"),
 		game = doc.querySelector("#game"),
 		ctx = canvas.getContext("2d"),
+		snackBar = doc.createElement("h2"),
 		lastTime;
 
 	canvas.width = 505;
 	canvas.height = 606;
 	canvas.setAttribute("id", "canvas");
 	game.appendChild(canvas);
+	snackBar.setAttribute("id", "snackBar");
+	game.appendChild(snackBar);
 
 	// Build hp bar
 	let heart = document.querySelector(".heart");
@@ -203,10 +206,17 @@ var Engine = (function(global) {
 		"images/char-horn-girl.png",
 		"images/char-pink-girl.png",
 		"images/char-princess-girl.png",
-		"images/char-boy-pink.png",
+		"images/char-horn-girl-winning.png",
+		"images/char-boy-winning.png",
+		"images/char-cat-girl-winning.png",
+		"images/char-pink-girl-winning.png",
+		"images/char-princess-girl-winning.png",
+		"images/char-boy-collision.png",
+		"images/char-cat-girl-collision.png",
 		"images/char-horn-girl-collision.png",
-		"images/char-horn-girl-win.png",
-		"images/char-horn-girl-winning.png"
+		"images/char-pink-girl-collision.png",
+		"images/char-princess-girl-collision.png",
+		"images/end-game.png"
 	]);
 	Resources.onReady(init);
 
