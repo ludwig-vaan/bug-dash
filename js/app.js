@@ -5,40 +5,51 @@ class Player {
 	constructor(x = 0, y = 0) {
 		this.x = x;
 		this.y = y;
+		// default sprite
 		this.sprite = `images/char-horn-girl.png`;
 		this.collisionSprite = `images/char-horn-girl-collision.png`;
 		this.winSprite = `images/char-horn-girl-winning.png`;
 		// png size in px
 		this.height = 85;
 		this.width = 75;
-		this.touch = false;
-		this.winner = false;
+
+		this.collision = false;
+		this.restart = false;
+
 		this.score = 0;
 		this.life = 5;
-		this.top = [];
+
+		this.highScore = [];
+
+		// Sound
 		this.stepPlayer = new Audio();
 		this.winPlayer = new Audio();
 		this.stepSound = "assets/audio/sfx_movement_footsteps5.wav";
 		this.winSound = "assets/audio/BANK_00_INSTR_0008_SND_0019.wav";
 
-		this.end = false;
+		this.gameOver = false;
 		this.endSprite = "images/end-game.png";
 	}
 	update(dt) {
 		// You should multiply any movement by the dt parameter
 		// which will ensure the game runs at the same speed for
 		// all computers.
-		// Handles collision with bugs
 	}
 
 	render() {
-		if (!this.touch && !this.winner && !this.end) {
+		if (!this.collision && !this.restart && !this.end) {
+			// there is no collision with a bug
+			// & player didn't reach water
+			// & player's life > 0
 			ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 		} else if (this.end) {
+			// player's life = 0
 			ctx.drawImage(Resources.get(this.endSprite), 0, 0);
-		} else if (this.winner) {
+		} else if (this.restart) {
+			// player reach water
 			ctx.drawImage(Resources.get(this.winSprite), this.x, this.y);
 		} else {
+			// there is a collision with a bug
 			ctx.drawImage(Resources.get(this.collisionSprite), this.x, this.y);
 		}
 	}
@@ -47,7 +58,7 @@ class Player {
 		this.stepPlayer.src = this.stepSound;
 		switch (key) {
 			case "left":
-				if (this.x > 0 && !this.touch) {
+				if (this.x > 0 && !this.collision) {
 					this.stepPlayer.load();
 					this.stepPlayer.pause();
 					this.stepPlayer.currentTime = 0;
@@ -56,26 +67,32 @@ class Player {
 				}
 				break;
 			case "right":
-				if (this.x < 304 && !this.touch) {
+				if (this.x < 304 && !this.collision) {
 					this.stepPlayer.load();
+					this.stepPlayer.pause();
+					this.stepPlayer.currentTime = 0;
 					this.stepPlayer.play();
 					this.x += 101;
 				}
 				break;
 			case "up":
-				if (this.y > 0 && !this.touch) {
+				if (this.y > 0 && !this.collision) {
 					this.stepPlayer.load();
+					this.stepPlayer.pause();
+					this.stepPlayer.currentTime = 0;
 					this.stepPlayer.play();
 					this.y -= 83;
 				}
-				// touch water case
-				if (this.y < 0 && !this.winner) {
+				// collision water case
+				if (this.y < 0 && !this.restart) {
 					this.win();
 				}
 				break;
 			case "down":
-				if (this.y < 400 && !this.touch) {
+				if (this.y < 400 && !this.collision) {
 					this.stepPlayer.load();
+					this.stepPlayer.pause();
+					this.stepPlayer.currentTime = 0;
 					this.stepPlayer.play();
 					this.y += 83;
 				}
@@ -87,44 +104,57 @@ class Player {
 
 	// If the player reaches the water the game should be reset
 	// by moving the player back to the initial location
-	// (you can write a separate reset Player method to handle that).
+
+	// collision with a bug
 	resetPosition() {
-		this.touch = true;
-		this.startPosition();
+		this.collision = true;
+		this.resetGame();
 		setTimeout(() => {
 			this.x = 202;
 			this.y = 405;
-			this.touch = false;
+			this.collision = false;
 		}, 550);
 	}
 
+	// player reach the water
 	win() {
-		this.winner = true;
+		this.restart = true;
 		this.winPlayer.src = this.winSound;
 		this.winPlayer.load();
 		this.winPlayer.play();
+
+		// increment the score
 		document.querySelector("#score").innerHTML = ++this.score;
+
+		// reset the player position
 		setTimeout(() => {
 			this.x = 202;
 			this.y = 405;
-			this.winner = false;
+			this.restart = false;
 		}, 350);
 	}
 
-	startPosition() {
+	resetGame() {
+		// decrement life & display non-solid heart
 		this.life -= 1;
 		if (this.life >= 0) {
 			let hp = document.querySelector(".fas");
 			hp.firstElementChild.className = "far fa-heart";
 			hp.className = "far";
 		}
+
+		// end of a game, display a message
+		// save the score
+		// & reset enemies positions, score and life
 		if (this.life === 0) {
 			document.querySelector("#snackBar").innerHTML = "YOU LOSE !";
-			this.top.push(this.score);
-			document.querySelector("#top").innerHTML = this.top.join(", ");
-			this.end = true;
+			this.highScore.push(this.score);
+			document.querySelector("#top").innerHTML = this.highScore.join(
+				", "
+			);
+			this.gameOver = true;
 			setTimeout(() => {
-				this.end = false;
+				this.gameOver = false;
 				bug_1 = new Enemy(-101, 60, 150);
 				bug_2 = new Enemy(-101, 142, 100);
 				bug_3 = new Enemy(-101, 224, 75);
@@ -135,7 +165,8 @@ class Player {
 				document.querySelector("#snackBar").innerHTML = "";
 
 				let heart = document.querySelector(".heart");
-				// delete old
+
+				// rebuild heart
 				heart.innerHTML = "";
 				for (let index = 0; index < this.life; index++) {
 					let li = document.createElement("li");
@@ -201,7 +232,7 @@ Enemy.prototype.collision = function() {
 		player.x + 80 > this.x &&
 		player.y < this.y + 60 &&
 		60 + player.y > this.y &&
-		!player.touch
+		!player.collision
 	) {
 		this.enemyAudio.src = this.collisionSound;
 		this.enemyAudio.play();
@@ -246,16 +277,7 @@ characters.forEach(character => {
 			0,
 			player.sprite.length - 4
 		);
-		console.log("====================================");
-		console.log(player.sprite);
-		console.log("====================================");
 		player.collisionSprite = `${player.defaultSprite}-collision.png`;
-		console.log("====================================");
-		console.log(player.collisionSprite);
-		console.log("====================================");
 		player.winSprite = `${player.defaultSprite}-winning.png`;
-		console.log("====================================");
-		console.log(player.winSprite);
-		console.log("====================================");
 	});
 });
