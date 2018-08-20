@@ -1,6 +1,4 @@
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
+// Player class with ES6 syntax
 class Player {
 	constructor(x = 0, y = 0) {
 		this.x = x;
@@ -21,7 +19,7 @@ class Player {
 
 		this.highScore = [];
 
-		// Sound
+		// Sounds
 		this.stepPlayer = new Audio();
 		this.winPlayer = new Audio();
 		this.stepSound = "assets/audio/sfx_movement_footsteps5.wav";
@@ -54,6 +52,8 @@ class Player {
 		}
 	}
 
+	// manage player's move with arrow keyboard input
+	// & play a step sound
 	handleInput(key) {
 		this.stepPlayer.src = this.stepSound;
 		switch (key) {
@@ -183,6 +183,7 @@ class Player {
 }
 
 // Enemies our player must avoid
+// use ES5 OOP
 var Enemy = function(x = -101, y = 0, speed = 100) {
 	// Variables applied to each of our instances go here,
 	// we've provided one for you to get started
@@ -216,8 +217,6 @@ Enemy.prototype.update = function(dt, witdh) {
 	} else {
 		this.x += this.speed * dt;
 	}
-	// Updates the Enemy location
-	// ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
 // Draw the enemy on the screen, required method for game
